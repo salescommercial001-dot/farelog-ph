@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FareLog PH - Transit Fare Tracker</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind Config for Dark Mode -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Force collapsible sections to stay hidden even if utility styles conflict */
+    [hidden] { display: none !important; }
+    /* Custom Scrollbar for sleek UI */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.5);
+      border-radius: 3px;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: rgba(75, 85, 99, 0.5);
+    }
+  </style>
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200 flex flex-col">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 shadow-sm">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-brand-500/20">
+          <i class="fa-solid fa-route"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight tracking-tight text-slate-900 dark:text-white">FareLog PH</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Offline Transit Expense Tracker</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- Dark Mode Toggle Button -->
+        <button id="themeToggleBtn" title="Toggle Theme" class="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition focus:outline-none">
+          <i id="themeIcon" class="fa-solid fa-moon text-lg"></i>
+        </button>
+        <!-- Data Backup Modal Toggle -->
+        <button id="openBackupModalBtn" title="Backup & Restore Data" class="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition focus:outline-none">
+          <i class="fa-solid fa-database text-lg"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main id="dashboardPage" class="max-w-5xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+
+    <!-- ALERT MESSAGE CONTAINER -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- QUICK ADD TRIP FORM SECTION -->
+    <section class="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-6 border border-slate-200 dark:border-slate-700/80 shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-circle-plus text-brand-600 dark:text-brand-500"></i>
+          <span id="formTitle">Log New Trip</span>
+        </h2>
+        <button id="cancelEditBtn" class="hidden text-xs text-slate-500 hover:text-rose-500 font-medium underline">
+          Cancel Edit
+        </button>
+      </div>
+
+      <form id="tripForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <input type="hidden" id="tripId" value="" />
+
+        <!-- Date & Time -->
+        <div class="flex flex-col gap-1.5">
+          <label for="tripDatetime" class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Date & Time</label>
+          <div class="relative">
+            <input type="datetime-local" id="tripDatetime" required class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none dark:text-white transition" />
+            <i class="fa-regular fa-calendar-alt absolute left-3 top-3 text-slate-400"></i>
+          </div>
+        </div>
+
+        <!-- Mode of Transport -->
+        <div class="flex flex-col gap-1.5">
+          <label for="transportMode" class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Transport Mode</label>
+          <div class="relative">
+            <select id="transportMode" required class="w-full pl-9 pr-8 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none dark:text-white appearance-none transition">
+              <option value="Jeepney">🚌 Jeepney</option>
+              <option value="Tricycle">🛺 Tricycle</option>
+              <option value="Bus">🚍 Bus</option>
+              <option value="UV Express">🚐 UV Express</option>
+              <option value="Taxi / Grab">🚕 Taxi / Grab</option>
+              <option value="Train / LRT / MRT">🚆 Train / LRT / MRT</option>
+              <option value="Bike / Scooter">🛵 Bike / Scooter</option>
+              <option value="Other">⛵ Other</option>
+            </select>
+            <i class="fa-solid fa-van-shuttle absolute left-3 top-3 text-slate-400"></i>
+            <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-xs text-slate-400 pointer-events-none"></i>
+          </div>
+        </div>
+
+        <!-- Fare Amount -->
+        <div class="flex flex-col gap-1.5">
+          <label for="fareAmount" class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Fare Amount (₱)</label>
+          <div class="relative">
+            <span class="absolute left-3 top-2.5 font-semibold text-slate-500 dark:text-slate-400">₱</span>
+            <input type="number" id="fareAmount" step="0.01" min="0" placeholder="0.00" required class="w-full pl-8 pr-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none dark:text-white font-medium transition" />
+          </div>
+        </div>
+
+        <!-- Boarding Point (Origin) -->
+        <div class="flex flex-col gap-1.5">
+          <label for="origin" class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Boarding Point (Origin)</label>
+          <div class="relative">
+            <input type="text" id="origin" placeholder="e.g. Monumento, Bus Stop" required class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none dark:text-white transition" />
+            <i class="fa-solid fa-location-dot absolute left-3 top-3 text-emerald-500"></i>
+          </div>
+        </div>
+
+        <!-- Alighting Point (Destination) -->
+        <div class="flex flex-col gap-1.5">
+          <label for="destination" class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Alighting Point (Destination)</label>
+          <div class="relative">
+            <input type="text" id="destination" placeholder="e.g. Ayala Ave, Terminal" required class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none dark:text-white transition" />
+            <i class="fa-solid fa-flag-checkered absolute left-3 top-3 text-rose-500"></i>
+          </div>
+        </div>
+
+        <!-- Notes / Remarks -->
+        <div class="flex flex-col gap-1.5">
+          <label for="notes" class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Notes / Remarks (Optional)</label>
+          <div class="relative">
+            <input type="text" id="notes" placeholder="e.g. Heavy traffic, Discount applied" class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none dark:text-white transition" />
+            <i class="fa-regular fa-sticky-note absolute left-3 top-3 text-slate-400"></i>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="md:col-span-2 lg:col-span-3 flex justify-end mt-2">
+          <button type="submit" id="saveTripBtn" class="w-full sm:w-auto px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm rounded-xl shadow-md hover:shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Save Fare Entry</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- DASHBOARD SUMMARY & ANALYTICS -->
+    <section class="space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie text-brand-600 dark:text-brand-500"></i>
+          <span>Summary & Analytics</span>
+        </h2>
+
+        <!-- Time Range Selector -->
+        <div class="inline-flex rounded-xl bg-slate-200 dark:bg-slate-700/60 p-1 text-xs font-medium">
+          <button data-period="today" class="period-btn px-3 py-1.5 rounded-lg transition">Today</button>
+          <button data-period="week" class="period-btn px-3 py-1.5 rounded-lg transition">This Week</button>
+          <button data-period="month" class="period-btn px-3 py-1.5 rounded-lg transition">This Month</button>
+          <button data-period="all" class="period-btn px-3 py-1.5 rounded-lg active bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm">All Time</button>
+        </div>
+      </div>
+
+      <!-- KPI Stat Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Spent</p>
+            <p id="kpiTotalSpent" class="text-2xl font-bold text-slate-900 dark:text-white mt-1">₱0.00</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-wallet"></i>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Trips</p>
+            <p id="kpiTripCount" class="text-2xl font-bold text-slate-900 dark:text-white mt-1">0</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-ticket"></i>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Average Fare / Trip</p>
+            <p id="kpiAvgFare" class="text-2xl font-bold text-slate-900 dark:text-white mt-1">₱0.00</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-calculator"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- DAILY SUMMARY -->
+      <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-sm">
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <div>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Daily Summary</h3>
+            <p class="text-[11px] text-slate-400 mt-1">Automatically grouped by day based on the selected summary period.</p>
+          </div>
+          <span id="dailySummaryTotal" class="text-xs font-semibold text-brand-700 dark:text-brand-400">₱0.00</span>
+        </div>
+        <div id="dailySummaryList" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+          <!-- Dynamic daily summaries -->
+        </div>
+      </div>
+
+      <!-- VISUAL BREAKDOWN CHARTS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- SVG Donut Chart for Transport Mode -->
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-sm flex flex-col justify-between">
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Spending by Transport Mode</h3>
+          <div class="flex flex-col sm:flex-row items-center justify-around gap-4 my-2">
+            <div class="relative w-40 h-40 flex items-center justify-center">
+              <svg id="donutChartSvg" class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                <!-- Svg Path dynamic elements -->
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span id="donutCenterText" class="text-xs font-bold text-slate-700 dark:text-slate-200">₱0</span>
+                <span class="text-[10px] text-slate-400">Spent</span>
+              </div>
+            </div>
+            <!-- Legend List -->
+            <div id="chartLegend" class="flex flex-col gap-1.5 text-xs w-full sm:w-auto max-h-36 overflow-y-auto pr-1">
+              <!-- Dynamic Legend Items -->
+            </div>
+          </div>
+        </div>
+
+        <!-- SVG Bar Breakdown for Top Routes or Transport Modes -->
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-sm flex flex-col justify-between">
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Top Transit Expenses</h3>
+          <div id="barChartContainer" class="flex flex-col gap-2 my-auto">
+            <!-- Dynamic Bar Progress elements -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TRIP HISTORY SHORTCUT -->
+    <section class="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-6 border border-slate-200 dark:border-slate-700/80 shadow-sm">
+      <button id="openHistoryPageBtn" type="button" class="w-full flex items-center justify-between gap-4 text-left">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-list-check"></i>
+          </div>
+          <div>
+            <h2 class="text-base font-semibold text-slate-900 dark:text-white">Trip History</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">View, search, filter, edit and delete your fare logs</p>
+          </div>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-300 flex-shrink-0">
+          <i class="fa-solid fa-chevron-right"></i>
+        </div>
+      </button>
+    </section>
+
+  </main>
+
+  <!-- TRIP HISTORY PAGE -->
+  <main id="historyPage" class="max-w-5xl mx-auto px-4 py-6 flex-1 w-full space-y-5 hidden">
+    <section class="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-6 border border-slate-200 dark:border-slate-700/80 shadow-sm space-y-4">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <button id="backToDashboardBtn" type="button" title="Back to Dashboard" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 flex items-center justify-center transition">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <div>
+            <h2 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2"><i class="fa-solid fa-list-check text-brand-600 dark:text-brand-500"></i> Trip History</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">All your logged transit expenses</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-2">
+        <div class="relative flex-1">
+          <input type="text" id="searchInput" placeholder="Search location or note..." class="w-full pl-8 pr-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none dark:text-white transition" />
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-slate-400 text-xs"></i>
+        </div>
+        <div class="relative">
+          <select id="modeFilter" class="w-full sm:w-44 pl-9 pr-7 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none dark:text-white appearance-none transition">
+            <option value="ALL">All Modes</option><option value="Jeepney">Jeepney</option><option value="Tricycle">Tricycle</option><option value="Bus">Bus</option><option value="UV Express">UV Express</option><option value="Taxi / Grab">Taxi / Grab</option><option value="Train / LRT / MRT">Train / LRT / MRT</option><option value="Bike / Scooter">Bike / Scooter</option><option value="Other">Other</option>
+          </select>
+          <i class="fa-solid fa-filter absolute left-3 top-3.5 text-slate-400 text-xs"></i><i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-[10px] text-slate-400 pointer-events-none"></i>
+        </div>
+      </div>
+
+      <div id="tripList" class="space-y-2.5"></div>
+      <div id="emptyState" class="hidden text-center py-12 px-4">
+        <div class="w-16 h-16 bg-slate-100 dark:bg-slate-700 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl"><i class="fa-solid fa-route"></i></div>
+        <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">No trips recorded yet</p>
+        <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Logged fares will appear here. Use the form above to add your first ride expense.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 py-4 mt-auto">
+    <div class="max-w-5xl mx-auto px-4 text-center text-xs text-slate-400 dark:text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
+      <p>FareLog PH &copy; Offline Capable Fare Logger</p>
+      <p class="flex items-center gap-1">
+        <i class="fa-solid fa-shield-halved text-brand-600"></i> 100% Client-Side & Local Storage Private
+      </p>
+    </div>
+  </footer>
+
+  <!-- DATA BACKUP & RESTORE MODAL -->
+  <div id="backupModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700 shadow-xl space-y-5">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-database text-brand-600"></i>
+          <span>Data Management</span>
+        </h3>
+        <button id="closeBackupModalBtn" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+        Your logged trips are stored locally on this device. Export selected records, save a full backup, or restore your data anytime.
+      </p>
+
+      <div class="space-y-3">
+        <!-- Export Options -->
+        <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-3 space-y-3 bg-slate-50/60 dark:bg-slate-700/20">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-file-export text-brand-600"></i>
+            <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Export Fare Logs</span>
+          </div>
+
+          <select id="exportScope" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-xs dark:text-white">
+            <option value="all">All Records</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="custom">Custom Date Range</option>
+          </select>
+
+          <div id="exportDateRange" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <input type="date" id="exportStartDate" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-xs dark:text-white" />
+            <input type="date" id="exportEndDate" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-xs dark:text-white" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button id="exportCsvBtn" class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium text-xs flex items-center justify-center gap-2 shadow transition">
+              <i class="fa-solid fa-file-csv"></i><span>Export CSV</span>
+            </button>
+            <button id="exportJsonBtn" class="py-2.5 px-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-medium text-xs flex items-center justify-center gap-2 shadow transition">
+              <i class="fa-solid fa-download"></i><span>Backup JSON</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Import / Restore -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div class="relative">
+            <input type="file" id="csvFileInput" accept=".csv" class="hidden" />
+            <button id="importCsvBtn" class="w-full py-2.5 px-4 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition">
+              <i class="fa-solid fa-file-import"></i>
+              <span>Import CSV</span>
+            </button>
+          </div>
+          <div class="relative">
+            <input type="file" id="jsonFileInput" accept=".json,application/json" class="hidden" />
+            <button id="restoreJsonBtn" class="w-full py-2.5 px-4 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition">
+              <i class="fa-solid fa-rotate-left"></i>
+              <span>Restore Backup</span>
+            </button>
+          </div>
+        </div>
+
+        <hr class="border-slate-200 dark:border-slate-700 my-2" />
+
+        <!-- Clear Data Button -->
+        <button id="clearDataBtn" class="w-full py-2.5 px-4 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition">
+          <i class="fa-solid fa-trash-can"></i>
+          <span>Clear All Local Fare Logs</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    /**
+     * APP STATE & LOCAL STORAGE MANAGERS
+     */
+    const STORAGE_KEY = 'farelog_ph_data_v1';
+    let trips = [];
+    let currentFilterPeriod = 'all'; // 'today', 'week', 'month', 'all'
+    let currentModeFilter = 'ALL';
+    let searchQuery = '';
+
+    // Icon mapping for modes
+    const MODE_ICONS = {
+      'Jeepney': { icon: 'fa-bus-simple', color: 'bg-amber-500' },
+      'Tricycle': { icon: 'fa-motorcycle', color: 'bg-emerald-500' },
+      'Bus': { icon: 'fa-bus', color: 'bg-blue-500' },
+      'UV Express': { icon: 'fa-van-shuttle', color: 'bg-purple-500' },
+      'Taxi / Grab': { icon: 'fa-taxi', color: 'bg-yellow-500' },
+      'Train / LRT / MRT': { icon: 'fa-train', color: 'bg-red-500' },
+      'Bike / Scooter': { icon: 'fa-person-biking', color: 'bg-teal-500' },
+      'Other': { icon: 'fa-route', color: 'bg-slate-500' }
+    };
+
+    const CHART_COLORS = [
+      '#f59e0b', '#10b981', '#3b82f6', '#a855f7', 
+      '#eab308', '#ef4444', '#14b8a6', '#64748b'
+    ];
+
+    /**
+     * INITIALIZATION
+     */
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      setDefaultDatetime();
+      loadTrips();
+      setupEventListeners();
+      renderApp();
+    });
+
+    /**
+     * SET DEFAULT DATETIME TO CURRENT LOCAL TIMESTAMP
+     */
+    function setDefaultDatetime() {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      document.getElementById('tripDatetime').value = now.toISOString().slice(0, 16);
+    }
+
+    /**
+     * THEME TOGGLE LOGIC
+     */
+    function initTheme() {
+      const savedTheme = localStorage.getItem('farelog_theme');
+      if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        document.getElementById('themeIcon').className = 'fa-solid fa-sun text-lg text-amber-400';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.getElementById('themeIcon').className = 'fa-solid fa-moon text-lg text-slate-600';
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('farelog_theme', isDark ? 'dark' : 'light');
+      document.getElementById('themeIcon').className = isDark 
+        ? 'fa-solid fa-sun text-lg text-amber-400' 
+        : 'fa-solid fa-moon text-lg text-slate-600';
+    }
+
+    /**
+     * LOCALSTORAGE DATA HANDLING
+     */
+    function loadTrips() {
+      try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        trips = data ? JSON.parse(data) : [];
+      } catch (e) {
+        showToast('Error loading local data', 'error');
+        trips = [];
+      }
+    }
+
+    function saveTrips() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(trips));
+      } catch (e) {
+        showToast('Failed to save to localStorage', 'error');
+      }
+    }
+
+    /**
+     * EVENT LISTENERS SETUP
+     */
+    function setupEventListeners() {
+      // Theme Button
+      document.getElementById('themeToggleBtn').addEventListener('click', toggleTheme);
+
+      // Form Submit
+      document.getElementById('tripForm').addEventListener('submit', handleFormSubmit);
+
+      // Cancel Edit Button
+      document.getElementById('cancelEditBtn').addEventListener('click', resetForm);
+
+      // Period Filter Buttons
+      document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.period-btn').forEach(b => {
+            b.classList.remove('active', 'bg-white', 'dark:bg-slate-800', 'text-slate-900', 'dark:text-white', 'shadow-sm');
+          });
+          e.target.classList.add('active', 'bg-white', 'dark:bg-slate-800', 'text-slate-900', 'dark:text-white', 'shadow-sm');
+          currentFilterPeriod = e.target.dataset.period;
+          renderApp();
+        });
+      });
+
+      // Search and Filter Select
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        searchQuery = e.target.value.toLowerCase().trim();
+        renderTripList();
+      });
+
+      document.getElementById('modeFilter').addEventListener('change', (e) => {
+        currentModeFilter = e.target.value;
+        renderTripList();
+      });
+
+      // Backup Modal Handlers
+      const backupModal = document.getElementById('backupModal');
+      document.getElementById('openBackupModalBtn').addEventListener('click', () => backupModal.classList.remove('hidden'));
+      document.getElementById('closeBackupModalBtn').addEventListener('click', () => backupModal.classList.add('hidden'));
+
+      // Export scope, backup and restore
+      const exportScope = document.getElementById('exportScope');
+      const exportDateRange = document.getElementById('exportDateRange');
+      exportScope.addEventListener('change', () => {
+        const isCustom = exportScope.value === 'custom';
+        exportDateRange.classList.toggle('hidden', !isCustom);
+        if (isCustom) {
+          const today = new Date().toISOString().slice(0, 10);
+          if (!document.getElementById('exportStartDate').value) document.getElementById('exportStartDate').value = today;
+          if (!document.getElementById('exportEndDate').value) document.getElementById('exportEndDate').value = today;
+        }
+      });
+      document.getElementById('exportCsvBtn').addEventListener('click', exportToCSV);
+      document.getElementById('exportJsonBtn').addEventListener('click', exportBackupJSON);
+      document.getElementById('importCsvBtn').addEventListener('click', () => document.getElementById('csvFileInput').click());
+      document.getElementById('csvFileInput').addEventListener('change', handleCsvImport);
+      document.getElementById('restoreJsonBtn').addEventListener('click', () => document.getElementById('jsonFileInput').click());
+      document.getElementById('jsonFileInput').addEventListener('change', handleJsonRestore);
+
+      // Trip History as a separate in-app page
+      document.getElementById('openHistoryPageBtn').addEventListener('click', openHistoryPage);
+      document.getElementById('backToDashboardBtn').addEventListener('click', closeHistoryPage);
+
+      // Clear All Data
+      document.getElementById('clearDataBtn').addEventListener('click', clearAllData);
+    }
+
+    function openHistoryPage() {
+      document.getElementById('dashboardPage').classList.add('hidden');
+      document.getElementById('historyPage').classList.remove('hidden');
+      renderTripList();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function closeHistoryPage() {
+      document.getElementById('historyPage').classList.add('hidden');
+      document.getElementById('dashboardPage').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /**
+     * FORM SUBMISSION (ADD / EDIT)
+     */
+    function handleFormSubmit(e) {
+      e.preventDefault();
+
+      const idInput = document.getElementById('tripId').value;
+      const datetime = document.getElementById('tripDatetime').value;
+      const mode = document.getElementById('transportMode').value;
+      const fare = parseFloat(document.getElementById('fareAmount').value) || 0;
+      const origin = document.getElementById('origin').value.trim();
+      const destination = document.getElementById('destination').value.trim();
+      const notes = document.getElementById('notes').value.trim();
+
+      if (!datetime || !origin || !destination || fare < 0) {
+        showToast('Please fill in all required fields accurately', 'error');
+        return;
+      }
+
+      if (idInput) {
+        // Update existing trip
+        const index = trips.findIndex(t => t.id === idInput);
+        if (index !== -1) {
+          trips[index] = {
+            id: idInput,
+            datetime,
+            mode,
+            fare,
+            origin,
+            destination,
+            notes,
+            updatedAt: new Date().toISOString()
+          };
+          showToast('Trip updated successfully!');
+        }
+      } else {
+        // Create new trip
+        const newTrip = {
+          id: 'trip_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          datetime,
+          mode,
+          fare,
+          origin,
+          destination,
+          notes,
+          createdAt: new Date().toISOString()
+        };
+        trips.unshift(newTrip); // Add to beginning
+        showToast('Fare entry logged successfully!');
+      }
+
+      saveTrips();
+      resetForm();
+      renderApp();
+    }
+
+    function editTrip(id) {
+      const trip = trips.find(t => t.id === id);
+      if (!trip) return;
+
+      document.getElementById('tripId').value = trip.id;
+      document.getElementById('tripDatetime').value = trip.datetime;
+      document.getElementById('transportMode').value = trip.mode;
+      document.getElementById('fareAmount').value = trip.fare;
+      document.getElementById('origin').value = trip.origin;
+      document.getElementById('destination').value = trip.destination;
+      document.getElementById('notes').value = trip.notes || '';
+
+      document.getElementById('formTitle').innerText = 'Edit Fare Entry';
+      document.getElementById('cancelEditBtn').classList.remove('hidden');
+      document.getElementById('saveTripBtn').querySelector('span').innerText = 'Update Trip';
+
+      // Scroll smoothly to form top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetForm() {
+      document.getElementById('tripId').value = '';
+      document.getElementById('tripForm').reset();
+      setDefaultDatetime();
+
+      document.getElementById('formTitle').innerText = 'Log New Trip';
+      document.getElementById('cancelEditBtn').classList.add('hidden');
+      document.getElementById('saveTripBtn').querySelector('span').innerText = 'Save Fare Entry';
+    }
+
+    function deleteTrip(id) {
+      if (confirm('Are you sure you want to delete this trip record?')) {
+        trips = trips.filter(t => t.id !== id);
+        saveTrips();
+        renderApp();
+        showToast('Trip entry removed');
+      }
+    }
+
+    /**
+     * FILTER LOGIC BY TIME PERIOD
+     */
+    function getFilteredTripsByPeriod() {
+      const now = new Date();
+
+      return trips.filter(trip => {
+        const tripDate = new Date(trip.datetime);
+
+        if (currentFilterPeriod === 'today') {
+          return tripDate.toDateString() === now.toDateString();
+        } else if (currentFilterPeriod === 'week') {
+          const startOfWeek = new Date(now);
+          startOfWeek.setDate(now.getDate() - now.getDay());
+          startOfWeek.setHours(0, 0, 0, 0);
+          return tripDate >= startOfWeek;
+        } else if (currentFilterPeriod === 'month') {
+          return tripDate.getMonth() === now.getMonth() && tripDate.getFullYear() === now.getFullYear();
+        }
+        return true; // 'all'
+      });
+    }
+
+    /**
+     * RENDER MASTER APP UI
+     */
+    function renderApp() {
+      const periodTrips = getFilteredTripsByPeriod();
+      renderAnalytics(periodTrips);
+      renderTripList();
+    }
+
+    /**
+     * RENDER SUMMARY & ANALYTICS DASHBOARD
+     */
+    function renderAnalytics(periodTrips) {
+      const totalSpent = periodTrips.reduce((acc, curr) => acc + curr.fare, 0);
+      const tripCount = periodTrips.length;
+      const avgFare = tripCount > 0 ? totalSpent / tripCount : 0;
+
+      document.getElementById('kpiTotalSpent').innerText = `₱${totalSpent.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      document.getElementById('kpiTripCount').innerText = tripCount;
+      document.getElementById('kpiAvgFare').innerText = `₱${avgFare.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+      // Aggregate spent by mode
+      const modeStats = {};
+      periodTrips.forEach(t => {
+        modeStats[t.mode] = (modeStats[t.mode] || 0) + t.fare;
+      });
+
+      renderDonutChart(modeStats, totalSpent);
+      renderBarChart(modeStats, totalSpent);
+    }
+
+    /**
+     * RENDER SVG DONUT CHART
+     */
+    function renderDonutChart(modeStats, totalSpent) {
+      const svg = document.getElementById('donutChartSvg');
+      const legend = document.getElementById('chartLegend');
+      const centerText = document.getElementById('donutCenterText');
+
+      svg.innerHTML = '';
+      legend.innerHTML = '';
+      centerText.innerText = `₱${Math.round(totalSpent).toLocaleString('en-PH')}`;
+
+      const modes = Object.keys(modeStats);
+      if (modes.length === 0 || totalSpent === 0) {
+        svg.innerHTML = `<circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#e2e8f0" stroke-width="3.8"></circle>`;
+        legend.innerHTML = `<span class="text-slate-400 italic">No fare data for period</span>`;
+        return;
+      }
+
+      let strokeDashoffset = 0;
+      modes.forEach((mode, idx) => {
+        const fare = modeStats[mode];
+        const percentage = (fare / totalSpent) * 100;
+        const color = CHART_COLORS[idx % CHART_COLORS.length];
+
+        // Draw SVG Circle Segment
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', '18');
+        circle.setAttribute('cy', '18');
+        circle.setAttribute('r', '15.915');
+        circle.setAttribute('fill', 'transparent');
+        circle.setAttribute('stroke', color);
+        circle.setAttribute('stroke-width', '3.8');
+        circle.setAttribute('stroke-dasharray', `${percentage} ${100 - percentage}`);
+        circle.setAttribute('stroke-dashoffset', -strokeDashoffset);
+        svg.appendChild(circle);
+
+        strokeDashoffset += percentage;
+
+        // Add Legend Item
+        const item = document.createElement('div');
+        item.className = 'flex items-center gap-2 text-xs';
+        item.innerHTML = `
+          <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${color}"></span>
+          <span class="text-slate-600 dark:text-slate-300 font-medium truncate max-w-[100px]">${mode}</span>
+          <span class="text-slate-400 dark:text-slate-500 ml-auto font-mono text-[11px]">${percentage.toFixed(0)}%</span>
+        `;
+        legend.appendChild(item);
+      });
+    }
+
+    /**
+     * RENDER TOP TRANSIT EXPENSES BAR BARS
+     */
+    function renderBarChart(modeStats, totalSpent) {
+      const container = document.getElementById('barChartContainer');
+      container.innerHTML = '';
+
+      const sorted = Object.entries(modeStats).sort((a, b) => b[1] - a[1]);
+
+      if (sorted.length === 0) {
+        container.innerHTML = `<span class="text-slate-400 italic text-xs text-center py-4">No breakdown available</span>`;
+        return;
+      }
+
+      sorted.slice(0, 4).forEach(([mode, amount], idx) => {
+        const percent = totalSpent > 0 ? (amount / totalSpent) * 100 : 0;
+        const color = CHART_COLORS[idx % CHART_COLORS.length];
+
+        const barRow = document.createElement('div');
+        barRow.className = 'space-y-1';
+        barRow.innerHTML = `
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-medium text-slate-700 dark:text-slate-300">${mode}</span>
+            <span class="font-semibold text-slate-900 dark:text-white">₱${amount.toFixed(2)}</span>
+          </div>
+          <div class="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-500" style="width: ${percent}%; background-color: ${color}"></div>
+          </div>
+        `;
+        container.appendChild(barRow);
+      });
+    }
+
+    /**
+     * RENDER TRIP HISTORY LIST WITH FILTERS & SEARCH
+     */
+    function renderTripList() {
+      const listContainer = document.getElementById('tripList');
+      const emptyState = document.getElementById('emptyState');
+      const periodTrips = getFilteredTripsByPeriod();
+
+      // Apply Search Query & Mode Dropdown Filter
+      const filtered = periodTrips.filter(t => {
+        const matchesMode = (currentModeFilter === 'ALL') || (t.mode === currentModeFilter);
+        const matchesSearch = !searchQuery || 
+          t.origin.toLowerCase().includes(searchQuery) || 
+          t.destination.toLowerCase().includes(searchQuery) || 
+          (t.notes && t.notes.toLowerCase().includes(searchQuery));
+        return matchesMode && matchesSearch;
+      });
+
+      listContainer.innerHTML = '';
+
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+
+      filtered.forEach(trip => {
+        const modeMeta = MODE_ICONS[trip.mode] || MODE_ICONS['Other'];
+        const formattedDate = new Date(trip.datetime).toLocaleString('en-PH', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+
+        const card = document.createElement('div');
+        card.className = 'bg-slate-50 dark:bg-slate-700/40 hover:bg-slate-100 dark:hover:bg-slate-700/70 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 group';
+
+        card.innerHTML = `
+          <div class="flex items-start gap-3 w-full sm:w-auto">
+            <div class="w-10 h-10 rounded-xl ${modeMeta.color} text-white flex items-center justify-center text-lg shadow-sm flex-shrink-0 mt-0.5 sm:mt-0">
+              <i class="fa-solid ${modeMeta.icon}"></i>
+            </div>
+            <div class="space-y-0.5 min-w-0 flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">${trip.mode}</span>
+                <span class="text-[11px] text-slate-400 dark:text-slate-400">&bull; ${formattedDate}</span>
+              </div>
+              <div class="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 flex-wrap">
+                <span class="truncate max-w-[140px] sm:max-w-[200px]" title="${escapeHtml(trip.origin)}">${escapeHtml(trip.origin)}</span>
+                <i class="fa-solid fa-arrow-right text-xs text-slate-400"></i>
+                <span class="truncate max-w-[140px] sm:max-w-[200px]" title="${escapeHtml(trip.destination)}">${escapeHtml(trip.destination)}</span>
+              </div>
+              ${trip.notes ? `<p class="text-xs text-slate-500 dark:text-slate-400 italic truncate"><i class="fa-regular fa-comment-dots text-[10px] mr-1"></i>${escapeHtml(trip.notes)}</p>` : ''}
+            </div>
+          </div>
+
+          <div class="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200 dark:border-slate-600/50">
+            <span class="text-base font-bold text-brand-700 dark:text-brand-400 font-mono">₱${trip.fare.toFixed(2)}</span>
+            <div class="flex items-center gap-1">
+              <button onclick="editTrip('${trip.id}')" title="Edit Trip" class="p-1.5 text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 rounded-lg transition">
+                <i class="fa-regular fa-pen-to-square text-sm"></i>
+              </button>
+              <button onclick="deleteTrip('${trip.id}')" title="Delete Trip" class="p-1.5 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 rounded-lg transition">
+                <i class="fa-regular fa-trash-can text-sm"></i>
+              </button>
+            </div>
+          </div>
+        `;
+
+        listContainer.appendChild(card);
+      });
+    }
+
+    /**
+     * CSV EXPORT FUNCTIONALITY
+     */
+    function getExportTrips() {
+      const scope = document.getElementById('exportScope')?.value || 'all';
+      const now = new Date();
+      const startInput = document.getElementById('exportStartDate')?.value;
+      const endInput = document.getElementById('exportEndDate')?.value;
+
+      let start, end;
+      if (scope === 'today') {
+        start = new Date(now); start.setHours(0,0,0,0);
+        end = new Date(now); end.setHours(23,59,59,999);
+      } else if (scope === 'week') {
+        start = new Date(now);
+        start.setDate(now.getDate() - now.getDay());
+        start.setHours(0,0,0,0);
+        end = new Date(now);
+        end.setHours(23,59,59,999);
+      } else if (scope === 'month') {
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23,59,59,999);
+      } else if (scope === 'custom') {
+        if (!startInput || !endInput) {
+          showToast('Please select both start and end dates', 'error');
+          return null;
+        }
+        start = new Date(`${startInput}T00:00:00`);
+        end = new Date(`${endInput}T23:59:59.999`);
+        if (start > end) {
+          showToast('Start date cannot be after end date', 'error');
+          return null;
+        }
+      } else {
+        return [...trips];
+      }
+
+      return trips.filter(t => {
+        const date = new Date(t.datetime);
+        return date >= start && date <= end;
+      });
+    }
+
+    function downloadBlob(content, type, filename) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function exportToCSV() {
+      const exportTrips = getExportTrips();
+      if (!exportTrips) return;
+      if (exportTrips.length === 0) {
+        showToast('No trips available for the selected export', 'error');
+        return;
+      }
+
+      // Export in chronological order: oldest trip first, newest trip last.
+      // Use a copy so the on-screen trip order is not affected.
+      const chronologicalTrips = [...exportTrips].sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+
+      const headers = ['ID', 'Date_Time', 'Mode', 'Origin', 'Destination', 'Fare_PHP', 'Notes'];
+      const csvRows = [headers.join(',')];
+
+      chronologicalTrips.forEach(t => {
+        const row = [
+          `"${t.id}"`, `"${t.datetime}"`, `"${t.mode}"`,
+          `"${escapeCsv(t.origin)}"`, `"${escapeCsv(t.destination)}"`,
+          t.fare, `"${escapeCsv(t.notes || '')}"`
+        ];
+        csvRows.push(row.join(','));
+      });
+
+      const scope = document.getElementById('exportScope')?.value || 'all';
+      downloadBlob('\ufeff' + csvRows.join('\n'), 'text/csv;charset=utf-8;', `farelog_${scope}_${new Date().toISOString().slice(0,10)}.csv`);
+      showToast(`Exported ${chronologicalTrips.length} trip${chronologicalTrips.length === 1 ? '' : 's'} successfully!`);
+    }
+
+    function exportBackupJSON() {
+      const exportTrips = getExportTrips();
+      if (!exportTrips) return;
+      if (exportTrips.length === 0) {
+        showToast('No trips available for backup', 'error');
+        return;
+      }
+
+      const backup = {
+        app: 'FareLog PH',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        recordCount: exportTrips.length,
+        trips: exportTrips
+      };
+      const scope = document.getElementById('exportScope')?.value || 'all';
+      downloadBlob(JSON.stringify(backup, null, 2), 'application/json;charset=utf-8;', `farelog_backup_${scope}_${new Date().toISOString().slice(0,10)}.json`);
+      showToast(`Backup created with ${exportTrips.length} trip${exportTrips.length === 1 ? '' : 's'}!`);
+    }
+
+    function handleJsonRestore(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const parsed = JSON.parse(evt.target.result);
+          const importedTrips = Array.isArray(parsed) ? parsed : parsed.trips;
+          if (!Array.isArray(importedTrips)) throw new Error('Invalid backup');
+
+          if (!confirm(`Restore ${importedTrips.length} trip record(s)? This will merge them with your current records.`)) return;
+
+          const existingIds = new Set(trips.map(t => t.id));
+          let added = 0;
+          importedTrips.forEach(t => {
+            if (!t || !t.datetime || typeof t.fare === 'undefined') return;
+            let record = { ...t };
+            if (!record.id || existingIds.has(record.id)) {
+              record.id = 'trip_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+            }
+            existingIds.add(record.id);
+            record.fare = Number(record.fare) || 0;
+            trips.push(record);
+            added++;
+          });
+
+          trips.sort((a,b) => new Date(b.datetime) - new Date(a.datetime));
+          saveTrips();
+          renderApp();
+          document.getElementById('backupModal').classList.add('hidden');
+          showToast(`Restored ${added} trip record(s)!`);
+        } catch (err) {
+          showToast('Invalid or unsupported backup file', 'error');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    /**
+     * CSV IMPORT FUNCTIONALITY
+     */
+    function handleCsvImport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (evt) {
+        try {
+          const text = evt.target.result;
+          const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== '');
+
+          if (lines.length < 2) {
+            showToast('Invalid or empty CSV file', 'error');
+            return;
+          }
+
+          let importedCount = 0;
+          for (let i = 1; i < lines.length; i++) {
+            // Regex to parse CSV row handling quotes
+            const cols = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || lines[i].split(',');
+
+            if (cols.length >= 5) {
+              const clean = cols.map(c => c.replace(/^"|"$/g, '').trim());
+              const newTrip = {
+                id: 'trip_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                datetime: clean[1] || new Date().toISOString().slice(0, 16),
+                mode: clean[2] || 'Other',
+                origin: clean[3] || 'Unknown',
+                destination: clean[4] || 'Unknown',
+                fare: parseFloat(clean[5]) || 0,
+                notes: clean[6] || '',
+                createdAt: new Date().toISOString()
+              };
+              trips.unshift(newTrip);
+              importedCount++;
+            }
+          }
+
+          saveTrips();
+          renderApp();
+          document.getElementById('backupModal').classList.add('hidden');
+          showToast(`Imported ${importedCount} trips!`);
+        } catch (err) {
+          showToast('Failed to parse CSV file', 'error');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = ''; // Clear file input
+    }
+
+    /**
+     * CLEAR ALL DATA
+     */
+    function clearAllData() {
+      if (confirm('WARNING: This will permanently delete all logged transit fare records from this device. Proceed?')) {
+        trips = [];
+        saveTrips();
+        renderApp();
+        document.getElementById('backupModal').classList.add('hidden');
+        showToast('All fare records cleared');
+      }
+    }
+
+    /**
+     * UTILITY FUNCTIONS
+     */
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      
+      const bgColor = type === 'error' ? 'bg-rose-600' : 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900';
+      toast.className = `${bgColor} text-xs font-semibold px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto`;
+      
+      toast.innerHTML = `
+        <i class="${type === 'error' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-check text-brand-500'}"></i>
+        <span>${message}</span>
+      `;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>"']/g, match => {
+        const quotes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+        return quotes[match];
+      });
+    }
+
+    function escapeCsv(str) {
+      return str.replace(/"/g, '""');
+    }
+  </script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch((err) => {
+      console.warn("Offline cache registration failed:", err);
+    });
+  });
+}
+</script>
+
+</body>
+</html>
