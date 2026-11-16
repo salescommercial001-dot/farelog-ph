@@ -1,0 +1,12 @@
+{
+  "id": "./",
+  "name": "FareLog PH",
+  "short_name": "FareLog PH",
+  "description": "FareLog PH - offline-friendly fare and trip tracker",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a"
+}
