@@ -8,5 +8,13 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0f172a",
-  "theme_color": "#0f172a"
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "./farelog-ph-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
